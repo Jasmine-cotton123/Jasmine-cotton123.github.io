@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>my picture</h1>
+    <div style="display: flex; justify-content: center; align-items: center; "> 
+        <div class="img-box panda" style="position: relative;"> 
+            <img id="pandaImg" src="熊猫1.jpg" alt="Panda Image">
+            <div class="button-container" style="z-index: 1001;"> 
+                <button id="toggleButton">Darken</button>
+                <button id="prevButton">上一张</button> 
+                <button id="nextButton">下一张</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div style="display: flex; justify-content: center;">
+        <div class="img-box" data-tip="Image 1">
+            <img src="熊猫1.jpg" alt="Image 1">
+        </div>
+        <div class="img-box" data-tip="Image 2">
+            <img src="熊猫2.jpg" alt="Image 2">
+        </div>
+        <div class="img-box" data-tip="Image 3">
+            <img src="熊猫3.jpg" alt="Image 3">
+        </div>
+        <div class="img-box" data-tip="Image 4">
+            <img src="熊猫4.jpg" alt="Image 4">
+        </div>
+    </div>
+    
+    <script src="scripts.js"></script>
+</body>
+</html>
