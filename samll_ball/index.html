@@ -1,0 +1,103 @@
+<html lang="en">
+<head> 
+    <meta charset="UTF-8">
+    <title>Bouncing Balls</title>
+    <style> 
+        canvas {
+            display: block;
+            margin: auto;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+ 
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const balls = [];
+ 
+        class Ball {
+            constructor(x, y, radius, color, speedX, speedY) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.color = color;
+                this.speedX = speedX;
+                this.speedY = speedY;
+            }
+ 
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+ 
+            update() {
+                this.draw();
+                this.x += this.speedX;
+                this.y += this.speedY;
+ 
+                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
+                    this.speedX = -this.speedX;
+                }
+                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
+                    this.speedY = -this.speedY;
+                }
+            }
+ 
+            checkCollision(other) {
+                const distance = Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
+                return distance <= this.radius + other.radius;
+            }
+        }
+ 
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+ 
+        function createBall(x, y, speedX, speedY) {
+            const radius = 10; 
+            const color = getRandomColor(); 
+            const ball = new Ball(x, y, radius, color, speedX, speedY);
+            balls.push(ball);
+        }
+ 
+        function handleCollisions() {
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    if (balls[i].checkCollision(balls[j])) {
+                        balls.splice(j, 1);
+                        balls.splice(i, 1);
+                        i--;
+                        break;
+                    }
+                }
+            }
+        }
+ 
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < balls.length; i++) {
+                balls[i].update();
+            }
+            handleCollisions();
+            requestAnimationFrame(animate);
+        }
+ 
+         
+        for (let i = 0; i < 106; i++) {
+            createBall(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 12 - 4, Math.random() * 12 - 4);
+        }
+ 
+        animate();
+    </script>
+</body>
+</html>
