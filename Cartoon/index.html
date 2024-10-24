@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>旋转动画</title>
+
+	<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+		}
+
+
+		body {
+			perspective: 1000px;
+			background: url("img/背景1.jpg") no-repeat;
+			background-size: 100vw 100vh;
+		}
+
+		.box {
+			position: relative;
+			width: 210px;
+			height: 300px;
+			margin: 280px auto;
+			transform-style: preserve-3d;
+			transition: .4s all;
+			transform: rotateY(0deg);
+			animation: myrotate 27s linear infinite;
+		}
+
+
+		.item {
+			width: 210px;
+			height: 300px;
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			margin: auto;
+			cursor: pointer;
+			transition: .4s all;
+			-webkit-box-reflect: below 15px -webkit-linear-gradient(transparent, rgba(0, 0, 0, 0.3))
+		}
+		
+		@keyframes myrotate {
+			from {
+				transform: rotateY(0deg);
+			}
+
+			to {
+				transform: rotateY(360deg);
+			}
+		}
+
+		.item img {
+			height: 100%;
+			width: 100%;
+			transition: .4s all;
+			opacity: 0.5;
+			transform: scale(1);
+		}
+
+		.item1 img {
+			transform: scale(1.2);
+			opacity: 1;
+		}
+
+		.item1 {
+			transform: translateZ(400px);
+		}
+
+		.item2 {
+			transform: rotateY(40deg) translateZ(400px);
+		}
+
+		.item3 {
+			transform: rotateY(80deg) translateZ(400px);
+		}
+
+		.item4 {
+			transform: rotateY(120deg) translateZ(400px);
+		}
+
+		.item5 {
+			transform: rotateY(160deg) translateZ(400px);
+		}
+
+		.item6 {
+			transform: rotateY(200deg) translateZ(400px);
+		}
+
+		.item7 {
+			transform: rotateY(240deg) translateZ(400px);
+		}
+
+		.item8 {
+			transform: rotateY(280deg) translateZ(400px);
+		}
+
+		.item9 {
+			transform: rotateY(320deg) translateZ(400px);
+		}
+		
+	</style>
+</head>
+
+<body>
+
+	<div class="box">
+		<div class="item item1">
+			<img src="img/图片1.jpg" />
+		</div>
+
+		<div class="item item2">
+			<img src="img/图片2.jpg" />
+		</div>
+
+		<div class="item item3">
+			<img src="img/图片3.jpg" />
+		</div>
+
+		<div class="item item4">
+			<img src="img/图片4.jpg" />
+		</div>
+		<div class="item item5">
+			<img src="img/图片5.jpg" />
+		</div>
+		<div class="item item6">
+			<img src="img/图片6.jpg" />
+		</div>
+		<div class="item item7">
+			<img src="img/图片7.jpg" />
+		</div>
+		<div class="item item8">
+			<img src="img/图片8.jpg" />
+		</div>
+		<div class="item item9">
+			<img src="img/图片1.jpg" />
+		</div>
+	</div>
+	<script>
+	let box = document.querySelector('.box');
+	let index = 0;
+	let o = 0;
+	let t = 2800; 
+	let count = box.children.length;
+
+	function update() {
+		index++;
+
+		for (let i = 0; i < count; i++) {
+			box.children[i].children[0].style.transform = `scale(1)`;
+			box.children[i].children[0].style.opacity = 0.5;
+		}
+
+		
+		box.children[count - (index)].children[0].style.transform = `scale(1.4)`;
+		box.children[count - (index)].children[0].style.opacity = 1;
+
+		if (index === count) {
+			index = 0;
+		}
+
+		o++;
+		if (o > 16) {
+			t = 2800; 
+			o = 0;
+		}
+		t +=  18; 
+		console.log(t);
+		
+
+		clearInterval(timer);
+		timer = setInterval(update, t);
+	}
+
+	let timer = setInterval(update, t);
+	</script>
+	
+</body>
+
+</html>
