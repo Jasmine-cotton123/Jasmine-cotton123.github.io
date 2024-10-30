@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>弹球</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: "PingFangSC-Regular", "微软雅黑", sans-serif;
+        height: 100%;
+      }
+
+      h1 {
+        font-size: 2rem;
+        letter-spacing: -1px;
+        position: absolute;
+        margin: 0;
+        top: -4px;
+        right: 5px;
+        color: white;
+      }
+
+      p {
+        position: absolute;
+        margin: 0;
+        top: 35px;
+        right: 5px;
+        color: #aaa;
+      }
+      button {
+        position: absolute;
+        top: 10px;             
+        left: 10px;            
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      #color-box{
+        position: absolute;
+        top: 10px;             
+        left: 160px;            
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #efefef;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border-radius: 2px;
+      }
+      select{
+        padding: 3px 10px;
+        font-size: 16px;
+        border-radius: 2px;
+        border: 1px solid #ccc;
+      }
+      .option{
+        width: 20px;
+        height: 20px;
+      }
+      #ballsColor{
+        position: absolute;
+        top: 10px;             
+        left: 370px;            
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #efefef;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>弹球</h1>
+    <p></p>
+    <button id="addBalls">添加10个小球</button>
+    <div id="color-box">
+      恶魔颜色
+      <select name="" id="em" onchange="handleEmColor(event)"></select>
+    </div>
+    <div id="ballsColor">
+      小球颜色
+      <input type="color" class="iColor" onchange="handleColor(event, 0)">
+      <input type="color" class="iColor" onchange="handleColor(event, 1)">
+      <input type="color" class="iColor" onchange="handleColor(event, 2)">
+      <input type="color" class="iColor" onchange="handleColor(event, 3)">
+      <input type="color" class="iColor" onchange="handleColor(event, 4)">
+      <input type="color" class="iColor" onchange="handleColor(event, 5)">
+    </div>
+    <canvas></canvas>
+
+    <script>
+      const BALLS_COUNT = 25;
+      const BALL_SIZE_MIN = 10;
+      const BALL_SIZE_MAX = 20;
+      const BALL_SPEED_MAX = 7;
+      const MIN_SIZE = 10;
+      const MAX_SIZE = 100;
+      const STEP_SIZE = 10;
+      const colorBox = document.getElementById("color-box");
+      const iColor = document.querySelectorAll(".iColor"); 
+      const em = document.getElementById("em");
+      
+      let colorArr = ["#e36363", "#63E38E", "#58B6FD", "#FCFF52", "#FE8BBD", "#FF944D"];
+      let nowColor = colorArr[0]
+      function initColor() {
+        em.innerHTML="";
+        for (let i = 0; i < iColor.length; i++) {
+          iColor[i].value = colorArr[i];
+          em.innerHTML += `<option style="background-color:${colorArr[i]}" value="${colorArr[i]}"></option>`;
+        }
+         em.innerHTML += `<option style="background-color:#ffffff" value="#ffffff"></option>`
+        em.style.backgroundColor = nowColor;
+      } 
+      function handleColor(e, i) {
+        colorArr[i] = e.target.value;
+        initColor()
+      }
+      function handleEmColor(e) {
+        nowColor = e.target.value;
+        em.style.backgroundColor = nowColor;
+      }
+      initColor();
+      em.addEventListener("change", (e) => {
+        evilBall.color = e.target.value;
+        e.target.blur();
+      });
+
+      function randomColor() { 
+        
+        return colorArr[Math.floor(Math.random() * colorArr.length)];
+      }
+
+
+      class Shape {
+        constructor(x, y, velX, velY, exists) {
+          this.x = x;
+          this.y = y;
+          this.velX = velX;
+          this.velY = velY;
+          this.exists = exists;
+        }
+      }
+
+      class Ball extends Shape {
+        constructor(x, y, velX, velY, color, size, exists) {
+          super(x, y, velX, velY, exists);
+          this.color = color;
+          this.size = size;
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.fillStyle = this.color;
+          ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+
+        update() {
+          if (this.x + this.size >= width) {
+            this.velX = -this.velX;
+          }
+
+          if (this.x - this.size <= 0) {
+            this.velX = -this.velX;
+          }
+
+          if (this.y + this.size >= height) {
+            this.velY = -this.velY;
+          }
+
+          if (this.y - this.size <= 0) {
+            this.velY = -this.velY;
+          }
+
+          this.x += this.velX;
+          this.y += this.velY;
+        }
+
+        collisionDetect() {
+          for (let j = 0; j < balls.length; j++) {
+            if (!(this === balls[j])) {
+              const dx = this.x - balls[j].x;
+              const dy = this.y - balls[j].y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              if (distance < this.size + balls[j].size && balls[j].exists) {
+                balls[j].color = this.color = randomColor();
+              }
+            }
+          }
+        }
+      }
+
+      class EvilCircle extends Shape {
+        constructor(x, y, exists) {
+          super(x, y, exists);
+          this.velX = BALL_SPEED_MAX;
+          this.velY = BALL_SPEED_MAX;
+          this.color = nowColor; 
+          this.size = 50;
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 3;
+          ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+
+        checkBounds() {
+          if (this.x + this.size >= width) {
+            this.x -= this.size;
+          }
+
+          if (this.x - this.size <= 0) {
+            this.x += this.size;
+          }
+
+          if (this.y + this.size >= height) {
+            this.y -= this.size;
+          }
+
+          if (this.y - this.size <= 0) {
+            this.y += this.size;
+          }
+        }
+
+        setControls() {
+          window.onkeydown = (e) => { 
+            switch (e.key) {
+              case "a":
+              case "A":
+              case "ArrowLeft":
+                this.x -= this.velX;
+                break;
+              case "d":
+              case "D":
+              case "ArrowRight":
+                this.x += this.velX;
+                break;
+              case "w":
+              case "W":
+              case "ArrowUp":
+                this.y -= this.velY;
+                break;
+              case "s":
+              case "S":
+              case "ArrowDown":
+                this.y += this.velY;
+                break;
+              case "=": 
+                this.adjustSize(STEP_SIZE);
+                break; 
+              case "-": 
+                this.adjustSize(-STEP_SIZE);
+                break; 
+            }
+          };
+        }
+
+        adjustSize(delta) {
+            if (this.size + delta >= MIN_SIZE && this.size + delta <= MAX_SIZE) {
+                this.size += delta;
+               
+            } 
+        }
+
+        collisionDetect() { 
+          for (let j = 0; j < balls.length; j++) { 
+            if (balls[j].exists) { 
+              const dx = this.x - balls[j].x; 
+              const dy = this.y - balls[j].y; 
+              const distance = Math.sqrt(dx * dx + dy * dy); 
+              if (distance < this.size + balls[j].size && (this.color === balls[j].color || this.color === "#ffffff")) { 
+                balls[j].exists = false; 
+                count--; 
+                para.textContent = "剩下 " + count + " 个球"; 
+              }
+            }
+          }
+        }
+      }
+
+      const para = document.querySelector("p"); 
+      const canvas = document.querySelector("canvas"); 
+      const ctx = canvas.getContext("2d"); 
+      const width = (canvas.width = window.innerWidth); 
+      const height = (canvas.height = window.innerHeight); 
+      const balls = []; 
+      let count = 0; 
+      const evilBall = new EvilCircle(random(0, width), random(0, height), true); 
+      evilBall.setControls();
+      loop(); 
+      document.getElementById("addBalls").addEventListener("click", () => { 
+        for (let i = 0; i < 10; i++) { 
+          const size = random(BALL_SIZE_MIN, BALL_SIZE_MAX); 
+          const ball = new Ball(random(0 + size, width - size), random(0 + size, height - size), random(-BALL_SPEED_MAX, BALL_SPEED_MAX), random(-BALL_SPEED_MAX, BALL_SPEED_MAX), randomColor(), size, true); 
+          balls.push(ball); 
+          count++; 
+          para.textContent = "还剩 " + count + " 个球"; 
+        }
+      });
+      function random(min, max) { 
+        return Math.floor(Math.random() * (max - min)) + min; 
+      }
+      function loop() { 
+        ctx.fillStyle = "rgba(0, 0, 0, 0.25)"; 
+        ctx.fillRect(0, 0, width, height); 
+        while (balls.length < BALLS_COUNT) { 
+          const size = random(BALL_SIZE_MIN, BALL_SIZE_MAX); 
+          const ball = new Ball(random(0 + size, width - size), random(0 + size, height - size), random(-BALL_SPEED_MAX, BALL_SPEED_MAX), random(-BALL_SPEED_MAX, BALL_SPEED_MAX), randomColor(), size, true); 
+          balls.push(ball); 
+          count++; 
+          para.textContent = "还剩 " + count + " 个球"; 
+        }
+        for (let i = 0; i < balls.length; i++) { 
+          if (balls[i].exists) { 
+            balls[i].draw(); 
+            balls[i].update(); 
+            balls[i].collisionDetect(); 
+          }
+      }
+        evilBall.draw(); 
+        evilBall.checkBounds(); 
+        evilBall.collisionDetect(); 
+        requestAnimationFrame(loop); 
+      }
+    </script>
