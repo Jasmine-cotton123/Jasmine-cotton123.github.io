@@ -1,9 +1,6 @@
 let data = null;
 async function getData() {
   data = await fetch("data.txt").then((res) => res.text());
-}
-getData();
-setTimeout(() => {
   let  text = data.split("-");
   let arr1 = text[0].split(",");
   let arr2 = text[1].split(",");
@@ -57,5 +54,7 @@ setTimeout(() => {
       });
     }
   }
-}, 2000);
+}
+getData();
+
 
