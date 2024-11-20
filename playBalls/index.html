@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Phaser Workshop - lesson 16: Randomizing gameplay</title>
+    <style>* { padding: 0; margin: 0; }</style>
+    <script src="js/phaser.min.js"></script>
+</head>
+<body>
+<script>
+// 创建一个新的 Phaser 游戏实例
+var game = new Phaser.Game(480, 320, Phaser.AUTO, null, {preload: preload, create: create, update: update});
+
+// 定义游戏中的各种变量
+var ball; // 球
+var paddle; // 挡板
+var bricks; // 砖块组
+var newBrick; // 新的砖块
+var brickInfo; // 砖块信息
+var scoreText; // 分数文本
+var score = 0; // 分数
+var lives = 3; // 生命值
+var livesText; // 生命值文本
+var lifeLostText; // 生命丢失提示文本
+var playing = false; // 游戏是否正在进行的标志
+var startButton; // 开始按钮
+
+// 预加载游戏资源
+function preload() {
+    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL; // 设置游戏缩放模式
+    game.scale.pageAlignHorizontally = true; // 水平居中
+    game.scale.pageAlignVertically = true; // 垂直居中
+    game.stage.backgroundColor = '#eee'; // 设置背景颜色
+    game.load.image('paddle', 'img/paddle.png'); // 加载挡板图片
+    game.load.image('brick', 'img/brick.png'); // 加载砖块图片
+    game.load.image('brick1', 'img/brick1.png'); // 加载砖块图片
+    game.load.image('brick2', 'img/brick2.png'); // 加载砖块图片
+    game.load.image('brick3', 'img/brick3.png'); // 加载砖块图片
+    game.load.image('brick4', 'img/brick4.png'); // 加载砖块图片
+    game.load.spritesheet('ball', 'img/wobble.png', 20, 20); // 加载球图片
+    game.load.spritesheet('button', 'img/button.png', 120, 40); // 加载按钮图片
+}
+
+// 创建游戏场景
+function create() {
+    game.physics.startSystem(Phaser.Physics.ARCADE); // 启动物理系统
+    game.physics.arcade.checkCollision.down = false; // 禁用球与地面碰撞
+    ball = game.add.sprite(game.world.width*0.5, game.world.height-25, 'ball'); // 创建球
+    ball.animations.add('wobble', [0,1,0,2,0,1,0,2,0], 24); // 添加球动画
+    ball.anchor.set(0.5); // 设置球锚点
+    game.physics.enable(ball, Phaser.Physics.ARCADE); // 启用球物理
+    ball.body.collideWorldBounds = true; // 球碰到边界时反弹
+    ball.body.bounce.set(1); // 设置球反弹系数
+    ball.checkWorldBounds = true; // 球离开边界时触发事件
+    ball.events.onOutOfBounds.add(ballLeaveScreen, this); // 球离开边界时调用 ballLeaveScreen 函数
+
+    paddle = game.add.sprite(game.world.width*0.5, game.world.height-5, 'paddle'); // 创建挡板
+    paddle.anchor.set(0.5,1); // 设置挡板锚点
+    game.physics.enable(paddle, Phaser.Physics.ARCADE); // 启用挡板物理
+    paddle.body.immovable = true; // 挡板不可移动
+
+    initBricks(); // 初始化砖块
+
+    textStyle = { font: '18px Arial', fill: '#0095DD' }; // 设置文本样式
+    scoreText = game.add.text(5, 5, 'Points: 0', textStyle); // 创建分数文本
+    livesText = game.add.text(game.world.width-5, 5, 'Lives: '+lives, textStyle); // 创建生命值文本
+    livesText.anchor.set(1,0); // 设置生命值文本锚点
+    lifeLostText = game.add.text(game.world.width*0.5, game.world.height*0.5, 'Life lost, tap to continue', textStyle); // 创建生命丢失提示文本
+    lifeLostText.anchor.set(0.5); // 设置生命丢失提示文本锚点
+    lifeLostText.visible = false; // 隐藏生命丢失提示文本
+
+    startButton = game.add.button(game.world.width*0.5, game.world.height*0.5, 'button', startGame, this, 1, 0, 2); // 创建开始按钮
+    startButton.anchor.set(0.5); // 设置开始按钮锚点
+}
+
+// 更新游戏场景
+function update() {
+    game.physics.arcade.collide(ball, paddle, ballHitPaddle); // 球与挡板碰撞
+    game.physics.arcade.collide(ball, bricks, ballHitBrick); // 球与砖块碰撞
+    if(playing) {
+        paddle.x = game.input.x || game.world.width*0.5; // 挡板跟随鼠标移动
+    }
+}
+
+
+// 初始化砖块
+function initBricks() {
+    brickInfo = {
+        width: 50, // 砖块宽度
+        height: 20, // 砖块高度
+        count: {
+            row: 7, // 砖块行数
+            col: 3 // 砖块列数
+        },
+        offset: {
+            top: 50, // 砖块顶部偏移量
+            left: 60 // 砖块左侧偏移量
+        },
+        padding: 10 // 砖块内边距
+    }
+    bricks = game.add.group(); // 创建砖块组
+    var brickTypes = ['brick', 'brick1', 'brick2', 'brick3', 'brick4']; // 创建砖块类型数组
+    var brickScores = [5, 10, 20, 30, 40]; // 创建砖块分数数组
+
+    brickCount = brickInfo.count.row * brickInfo.count.col; // 初始化砖块数量
+
+    for(c=0; c<brickInfo.count.col; c++) { // 遍历列
+        for(r=0; r<brickInfo.count.row; r++) { // 遍历行
+            var brickX = (r*(brickInfo.width+brickInfo.padding))+brickInfo.offset.left; // 计算砖块X坐标
+            var brickY = (c*(brickInfo.height+brickInfo.padding))+brickInfo.offset.top; // 计算砖块Y坐标
+            var randomIndex = Math.floor(Math.random() * brickTypes.length); // 随机选择一个砖块类型
+            var newBrick = game.add.sprite(brickX, brickY, brickTypes[randomIndex]); // 创建砖块
+            newBrick.score = brickScores[randomIndex]; // 设置砖块分数
+            game.physics.enable(newBrick, Phaser.Physics.ARCADE); // 启用砖块物理
+            newBrick.body.immovable = true; // 砖块不可移动
+            newBrick.anchor.set(0.5); // 设置砖块锚点
+            bricks.add(newBrick); // 将砖块添加到砖块组
+        }
+    }
+    
+}
+
+// 球与砖块碰撞
+function ballHitBrick(ball, brick) {
+    var killTween = game.add.tween(brick.scale); // 创建砖块缩放动画
+    killTween.to({x:0,y:0}, 200, Phaser.Easing.Linear.None); // 设置动画参数
+    killTween.onComplete.addOnce(function(){
+        brick.kill(); // 动画完成后销毁砖块
+        brickCount--; // 减少砖块数量
+        if(brickCount === 0) { // 如果所有砖块都被摧毁
+            alert('You won the game, congratulations!'); // 弹出胜利提示
+            location.reload(); // 重新加载游戏
+        }
+    }, this);
+    killTween.start(); // 启动动画
+    score += brick.score; // 增加分数
+    scoreText.setText('Points: '+score); // 更新分数文本
+}
+
+
+
+// 球离开屏幕
+function ballLeaveScreen() {
+    lives--; // 减少生命值
+    if(lives) { // 如果还有生命值
+        livesText.setText('Lives: '+lives); // 更新生命值文本
+        lifeLostText.visible = true; // 显示生命丢失提示文本
+        ball.reset(game.world.width*0.5, game.world.height-25); // 重置球的位置
+        paddle.reset(game.world.width*0.5, game.world.height-5); // 重置挡板的位置
+        game.input.onDown.addOnce(function(){
+            lifeLostText.visible = false; // 隐藏生命丢失提示文本
+            ball.body.velocity.set(150, -150); // 设置球的速度
+        }, this);
+    }
+    else { // 如果没有生命值
+        alert('You lost, game over!'); // 弹出失败提示
+        location.reload(); // 重新加载游戏
+    }
+}
+
+// 球与挡板碰撞
+function ballHitPaddle(ball, paddle) {
+    ball.animations.play('wobble'); // 播放球动画
+    ball.body.velocity.x = -1*5*(paddle.x-ball.x); // 设置球的速度
+}
+
+// 开始游戏
+function startGame() {
+    startButton.destroy(); // 销毁开始按钮
+    ball.body.velocity.set(150, -150); // 设置球的速度
+    playing = true; // 设置游戏状态为正在播放
+}
+</script>
+</body>
+</html>
