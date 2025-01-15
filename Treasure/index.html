@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/index.css">
+    </link>
+    <title>宝藏地图探险</title>
+</head>
+
+<body>
+    <div class="box">
+        <div class="main">
+            <div class="btn start-btn" onclick="start()">开始探险</div>
+        </div>
+        <div class="b2">
+            <div title="前往森林" onclick="tosl(0)">
+                <img title="前往森林" src="./img/dw.gif" alt="">
+            </div>
+            <div title="前往神庙" onclick="tosl(1)">
+                <img title="前往神庙" src="./img/dw.gif" alt="">
+            </div>
+            <div title="前往洞穴" onclick="tosl(2)">
+                <img title="前往洞穴" src="./img/dw.gif" alt="">
+            </div>
+        </div>
+        <div class="b3">
+            <img class="box2" src="./img/bx.png" alt="" onclick="getTreasure(true)">
+            <img src="./img/bx.png" alt="" onclick="getTreasure(false)">
+            <div class="time">10秒内找到宝箱</div>
+        </div>
+    </div>
+    <div class="tc">
+        <div class="tc-main">
+            <div class="tc-title">探险中</div>
+            <div class="content">
+
+            </div>
+        </div>
+        <div class="btn-box">
+            <div class="btn end" onclick="back()">返回首页</div>
+            <div class="btn end" onclick="start()">继续探险</div>
+        </div>
+    </div>
+    <script src="./js/treasure01.js"></script>
+    <script>
+        let step = 1;
+        let main = document.querySelector('.main');
+        let b2 = document.querySelector('.b2');
+        let tc = document.querySelector('.tc');
+        let box = document.querySelector('.box');
+        let btnBox = document.querySelector('.btn-box');
+        let tcMain = document.querySelector('.content');
+        let b3 = document.querySelector('.b3');
+        let box2 = document.querySelector('.box2');
+        let timr = null
+        let nowType = null
+        function start() {
+            clearInterval(timr);
+            step = 2;
+            main.style.display = 'none';
+            tc.style.display = 'none';
+            b2.style.display = 'block';
+            setbg(step);
+        }
+        function setbg(step, type = null) {
+            if (type === null) {
+                box.style.background = `url(./img/b${step}.png) no-repeat`;
+                box.style.backgroundSize = '100% 100%';
+                return;
+            }
+            type = type;
+            box.style.background = `url(./img/${['sl.jpg', 'sm.png', 'dx.png'][type]}) no-repeat`;
+            box.style.backgroundSize = '100% 100%';
+        }
+        function getTreasure(truth = true) {
+            clearInterval(timr);
+            b3.style.display = 'none';
+            b3.querySelector('.time').innerHTML = `10秒内找到宝箱`;
+            tc.style.display = 'flex';
+            tcMain.innerHTML = '';
+            btnBox.style.display = 'none';
+            let div = document.createElement('div');
+            if (nowType || nowType === 0) {
+                let str = ['找到最关键的线索————前往洞穴', '找到第一个线索————前往森林', '恭喜!你找到了传说中的宝藏!'][nowType];
+                div.innerHTML = nowType === 2 && !truth ? '任务失败，您被假宝箱里的蜘蛛咬伤了' : str;
+                tcMain.appendChild(div);
+                btnBox.style.display = 'flex';
+            }
+
+        }
+        async function tosl(type) {
+            if (timr) clearInterval(timr);  // 防止重复创建定时器
+            step = 3;
+            nowType = type;
+            setbg(step, type);
+            box2.style.display = 'none';
+            if (type === 2) box2.style.display = 'block';
+            b2.style.display = 'none';
+            b3.style.display = 'block';
+            try {
+                await TreasureMap.searchTemple(type);
+            } catch (e) {
+                b3.style.display = 'none';
+                tc.style.display = 'flex';
+                tcMain.innerHTML = '';
+                btnBox.style.display = 'none';
+                let div = document.createElement('div');
+                div.innerHTML = e;
+                tcMain.appendChild(div);
+                btnBox.style.display = 'flex';
+                b3.querySelector('.time').innerHTML = `10秒内找到宝箱`;
+                return
+            }
+            setTimeout(() => {
+                let i = 10;
+                timr = setInterval(() => {
+                    i--;
+                    b3.querySelector('.time').innerHTML = `${i} 秒内找到宝箱`;
+
+                    if (i <= 0) {
+                        clearInterval(timr);
+                        b3.style.display = 'none';
+                        tc.style.display = 'flex';
+                        tcMain.innerHTML = '';
+                        btnBox.style.display = 'none';
+                        let div = document.createElement('div');
+                        div.innerHTML = `任务失败`;
+                        tcMain.appendChild(div);
+                        btnBox.style.display = 'flex';
+                        b3.querySelector('.time').innerHTML = `10秒内找到宝箱`;
+                    }
+                }, 1000);
+            }, 100)
+        }
+        function back() {
+            clearInterval(timr);
+            step = 1;
+            main.style.display = 'block';
+            tc.style.display = 'none';
+            b2.style.display = 'none';
+            setbg(step);
+        }
+    </script>
+</body>
+
+</html>

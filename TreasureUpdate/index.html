@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/index.css">
+    </link>
+    <title>宝藏地图探险</title>
+</head>
+
+<body>
+    <img src="./img/music.png" alt="" id="music">
+    <div class="box">
+        <div class="main">
+            <div class="btn start-btn" onclick="start()">开始探险</div>
+            <div class="user">
+                <div><span>玩家昵称：</span><input type="text" placeholder="请输入昵称" id="name"></div>
+                <div><span>玩家ID：</span><input type="text" placeholder="请输入ID" id="id"></div>
+            </div>
+        </div>
+        <div class="b2">
+            <div title="前往森林" onclick="tosl(0)">
+                <img title="前往森林" src="./img/dw.gif" alt="">
+            </div>
+            <div title="前往神庙" onclick="tosl(1)">
+                <img title="前往神庙" src="./img/dw.gif" alt="">
+            </div>
+            <div title="前往洞穴" onclick="tosl(2)">
+                <img title="前往洞穴" src="./img/dw.gif" alt="">
+            </div>
+        </div>
+        <div class="b3">
+            <img class="box2" src="./img/bx.png" alt="" onclick="getTreasure(true)">
+            <img src="./img/bx.png" alt="" onclick="getTreasure(false)">
+
+        </div>
+        <div class="info-box">
+            <span>ID：</span>
+            <span>昵称：</span>
+        </div>
+    </div>
+    <div class="tc">
+        <div class="tc-main">
+            <div class="tc-title">探险中</div>
+            <div class="content">
+
+            </div>
+        </div>
+        <div class="btn-box">
+            <div class="btn end" onclick="back()">返回首页</div>
+            <div class="btn end" onclick="start()">继续探险</div>
+        </div>
+    </div>
+    <audio id="audio" src="./audio/1.mp3" loop></audio>
+    <script src="./js/treasure.js"></script>
+    <script>
+        let name = document.getElementById('name');
+        let id = document.getElementById('id');
+        name.value = localStorage.getItem('name') || '';
+        id.value = localStorage.getItem('id') || '';
+        let step = localStorage.getItem('step') || 1;
+        let main = document.querySelector('.main');
+        let b2 = document.querySelector('.b2');
+        let tc = document.querySelector('.tc');
+        let box = document.querySelector('.box');
+        let btnBox = document.querySelector('.btn-box');
+        let tcMain = document.querySelector('.content');
+        let b3 = document.querySelector('.b3');
+        let box2 = document.querySelector('.box2');
+        let nowType = localStorage.getItem('type') || null;
+        let infoBox = document.querySelector('.info-box');
+        let audio = document.getElementById('audio');
+        let music = document.getElementById('music');
+
+        music.onclick = function () {
+            if (audio.paused) {
+                audio.play();
+                music.style.animationPlayState = 'running';
+            } else {
+                audio.pause();
+                music.style.animationPlayState = 'paused';
+            }
+        }
+
+        function init() {
+            infoBox.innerHTML = `<span>ID：${id.value}</span> <span>昵称：${name.value}</span>`;
+            infoBox.style.display = 'block';
+            if (step == 2) {
+                main.style.display = 'none';
+                tc.style.display = 'none';
+                b2.style.display = 'block';
+                audio.play();
+                console.log(step,nowType);
+                
+                setbg(step, nowType);
+            } 
+            if (step == 3) {
+                main.style.display = 'none';
+                tc.style.display = 'none';
+                b2.style.display = 'none';
+                b3.style.display = 'block';
+                audio.play();
+                setbg(step, nowType);
+            }
+        }
+        init();
+
+        function start() {
+            if (step === 1) {
+                if (!name.value || !id.value) {
+                    alert('请输入昵称');
+                    return;
+                }
+                if (!id.value) {
+                    alert('请输入ID');
+                    return;
+                }
+            }
+            localStorage.setItem('name', name.value);
+            localStorage.setItem('id', id.value);
+            infoBox.innerHTML = `<span>ID：${id.value}</span> <span>昵称：${name.value}</span>`;
+            infoBox.style.display = 'block';
+            audio.play();
+            step = 2;
+            localStorage.setItem('step', step);
+            localStorage.setItem('type', null);
+            main.style.display = 'none';
+            tc.style.display = 'none';
+            b2.style.display = 'block';
+            setbg(step);
+        }
+
+        function setbg(step, type = null) {
+            if (type === null || type === 'null') {
+                box.style.background = `url(./img/b${step}.png) no-repeat`;
+                box.style.backgroundSize = '100% 100%';
+                return;
+            }
+            type = type;
+            box.style.background = `url(./img/${['sl.jpg', 'sm.png', 'dx.png'][type]}) no-repeat`;
+            box.style.backgroundSize = '100% 100%';
+        }
+
+        function getTreasure(truth = true) {
+            b3.style.display = 'none';
+            tc.style.display = 'flex';
+            tcMain.innerHTML = '';
+            btnBox.style.display = 'none';
+            let div = document.createElement('div');
+            if (nowType || nowType === 0) {
+                let str = ['找到最关键的线索————前往洞穴', '找到第一个线索————前往森林', '恭喜!你找到了传说中的宝藏!'][nowType];
+                div.innerHTML = nowType === 2 && !truth ? '任务失败，您被假宝箱里的蜘蛛咬伤了' : str;
+                tcMain.appendChild(div);
+                btnBox.style.display = 'flex';
+            }
+
+        }
+
+        async function tosl(type) {
+            step = 3;
+            localStorage.setItem('step', step);
+            localStorage.setItem('type', type);
+            nowType = type;
+            setbg(step, type);
+            box2.style.display = 'none';
+            if (type === 2) box2.style.display = 'block';
+            b2.style.display = 'none';
+            try {
+                await window.TreasureMap.searchTemple(type);
+                b3.style.display = 'block';
+            } catch (e) {
+                b3.style.display = 'none';
+                tc.style.display = 'flex';
+                tcMain.innerHTML = '';
+                btnBox.style.display = 'none';
+                let div = document.createElement('div');
+                div.innerHTML = e;
+                tcMain.appendChild(div);
+                btnBox.style.display = 'flex';
+                return
+            }
+        }
+        
+        function back() {
+            step = 1;
+            localStorage.setItem('step', step);
+            localStorage.setItem('type', null);
+            main.style.display = 'block';
+            tc.style.display = 'none';
+            b2.style.display = 'none';
+            setbg(step);
+        }
+    </script>
+</body>
+
+</html>
